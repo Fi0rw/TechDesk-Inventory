@@ -4,7 +4,6 @@ def init_db():
     conn = sqlite3.connect('inventory.db')
     cursor = conn.cursor()
 
-    # Cargar y ejecutar el schema SQL
     with open('schema.sql', 'r', encoding='utf-8') as f:
         cursor.executescript(f.read())
 
@@ -46,7 +45,12 @@ def init_db():
         VALUES (?, ?, ?, ?, ?, ?)
     ''', initial_assets)
 
-    # Registro de historial inicial
+    # Configuración de Mínimos por Defecto por Categoría
+    categories = ['Laptops', 'Monitores', 'Periféricos', 'Redes', 'Servidores']
+    for cat in categories:
+        cursor.execute('INSERT INTO category_settings (category, min_available) VALUES (?, ?)', (cat, 2))
+
+    # Historial Inicial
     cursor.execute('SELECT id, status, location, custodian FROM assets')
     assets = cursor.fetchall()
     for asset in assets:
@@ -57,7 +61,7 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print("✅ Base de datos 'inventory.db' inicializada con exito con 20 activos iniciales.")
+    print("✅ Base de datos re-inicializada con soporte para Mínimos y QR.")
 
 if __name__ == '__main__':
     init_db()

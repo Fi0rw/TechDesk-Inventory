@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS asset_history;
 DROP TABLE IF EXISTS assets;
+DROP TABLE IF EXISTS category_settings;
 
 CREATE TABLE assets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,4 +22,9 @@ CREATE TABLE asset_history (
     notes TEXT,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (asset_id) REFERENCES assets (id)
+);
+
+CREATE TABLE category_settings (
+    category TEXT PRIMARY KEY,
+    min_available INTEGER DEFAULT 2
 );
