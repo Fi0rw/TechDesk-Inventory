@@ -4,62 +4,40 @@
 ![Flask](https://img.shields.io/badge/Flask-3.0%2B-green?style=flat-square&logo=flask)
 ![SQLite](https://img.shields.io/badge/SQLite-3-lightgrey?style=flat-square&logo=sqlite)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.0-38B2AC?style=flat-square&logo=tailwind-css)
-![License](https://img.shields.io/badge/License-MIT-brightgreen?style=flat-square)
 
-**TechDesk Inventory** es una aplicación web MVP (Producto Mínimo Viable) desarrollada para la gestión eficiente de activos tecnológicos (Hardware Asset Management - HAM). Permite llevar el control centralizado del ciclo de vida de los equipos informáticos, garantizando la trazabilidad, asignación de custodios, alertas de stock mínimo y gestión de garantías.
-
----
-
-## 📌 Tabla de Contenidos
-
-1. [Descripción del Proyecto](#-descripción-del-proyecto)
-2. [Características Principales](#-características-principales)
-3. [Arquitectura y Tecnologías](#-arquitectura-y-tecnologías)
-5. [Estructura del Proyecto](#-estructura-del-proyecto)
-6. [Requisitos Previos](#-requisitos-previos)
-7. [Instalación y Configuración](#-instalación-y-configuración)
-8. [Ejecución](#-ejecución)
-   - [Inicio Rápido (Usuarios no técnicos - PowerShell)](#-inicio-rápido-script-powershell)
-   - [Inicio Manual (Desarrolladores)](#-inicio-manual-desarrolladores)
-9. [Guía de Uso](#-guía-de-uso)
-10. [Contribución](#-contribución)
-11. [Licencia](#-licencia)
+Aplicación web MVP para la gestión de activos tecnológicos (Hardware Asset Management - HAM). Permite controlar el ciclo de vida de los equipos, asignaciones, garantías, alertas de stock e historial de movimientos.
 
 ---
 
+## Características
 
-## ✨ Características Principales
-
-- 📦 **Gestión Completa de Activos**: Monitoreo de laptops, monitores, periféricos, servidores y dispositivos de red.
-- 🔄 **Ciclo de Vida Integrado**: Registro de 3 operaciones fundamentales HAM (Asignación, Devolución y Mantenimiento/Baja).
-- 👤 **Asignación Automática de Custodios**: Reglas automáticas para determinar el responsable del activo según su estado.
-- 📍 **Control de Ubicaciones**: Sincronización estricta entre estados y ubicaciones físicas (Depósito Central, Taller de IT, Sucursales, etc.).
-- ⚠️ **Alertas de Stock Mínimo**: Indicadores visuales en el Dashboard cuando una categoría cae por debajo del umbral mínimo configurado.
-- 🏷️ **Etiquetas con Código QR**: Generación dinámica de etiquetas imprimibles para fácil escaneo y auditoría de equipos.
-- 📊 **Exportación de Datos**: Descarga de reportes consolidados en formato CSV (compatible con Excel).
-- 📜 **Historial de Auditoría**: Registro automático de cada cambio de estado, custodio, ubicación o notas asociadas a un activo.
+- **Gestión de activos:** Control de laptops, monitores, periféricos, servidores y redes.
+- **Ciclo de vida HAM:** Operaciones de Asignación, Devolución y Mantenimiento/Baja.
+- **Reglas automáticas:** Asignación automática de custodios y ubicaciones según el estado del equipo.
+- **Alertas de stock:** Avisos visuales en categorías con bajo stock disponible.
+- **Etiquetas QR:** Generación de códigos QR imprimibles por equipo.
+- **Reportes:** Exportación del inventario completo a formato CSV.
+- **Bitácora:** Registro inmutable de cambios de estado y movimientos.
 
 ---
 
-## 🛠️ Arquitectura y Tecnologías
+## Stack Tecnológico
 
-La aplicación sigue una arquitectura ligera y autosostenible:
-
-- **Lenguaje Principal**: Python 3.8+
-- **Backend Framework**: [Flask](https://flask.palletsprojects.com/) (Ruteo, renderizado de plantillas y lógica de negocio).
-- **Base de Datos**: [SQLite](https://www.sqlite.org/) (Motor relacional liviano sin necesidad de servidor externo).
-- **Frontend & UI**: HTML5 con [Tailwind CSS](https://tailwindcss.com/) vía CDN (Diseño responsivo y moderno).
-- **Automatización**: PowerShell para despliegue y verificación en Windows.
+- **Backend:** Python 3.8+ con Flask
+- **Base de datos:** SQLite
+- **Frontend:** HTML5 + Tailwind CSS (vía CDN)
+- **Automatización:** PowerShell (`.ps1`)
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```text
 techdesk_inventory/
 │
 ├── app.py                  # Servidor Flask, rutas y lógica principal
 ├── schema.sql              # Esquema relacional de la base de datos (SQLite)
+├── inventory.db            # Base de datos
 ├── init_db.py              # Script para crear la BD e insertar datos iniciales
 ├── iniciar_techdesk.ps1    # Script de automatización para ejecución en Windows
 ├── requirements.txt        # Dependencias del proyecto
@@ -74,86 +52,46 @@ techdesk_inventory/
 
 ---
 
-## 📋 Requisitos Previos
+## Stack Tecnológico
 
-Antes de comenzar, asegúrate de contar con:
-
-- **Python 3.8** o superior instalado.
-- **Pip** (Administrador de paquetes de Python).
-- Un navegador web moderno (Google Chrome, Edge, Firefox, Brave).
-- *(Opcional para Windows)* **PowerShell 5.1+**.
+- **Backend:** Python 3.8+ con Flask
+- **Base de datos:** SQLite
+- **Frontend:** HTML5 + Tailwind CSS (vía CDN)
+- **Automatización:** PowerShell (`.ps1`)
 
 ---
 
-## 🚀 Instalación y Configuración
+## Ejecución
 
-1. **Clonar el repositorio** o descargar los archivos del proyecto:
-   ```bash
-   git clone https://github.com/tu-usuario/techdesk-inventory.git
-   cd techdesk-inventory
-   ```
+### Opción 1: Automática (Windows)
 
-2. *(Opcional)* **Crear y activar un entorno virtual**:
-   - **Windows:**
-     ```powershell
-     python -m venv venv
-     .\venv\Scripts\activate
-     ```
-   - **Linux/macOS:**
-     ```bash
-     python3 -m venv venv
-     source venv/bin/activate
-     ```
+Ejecuta el script de PowerShell haciendo clic derecho -> **Ejecutar con PowerShell**:
+```powershell
+.\iniciar_techdesk.ps1
+```
+El script verifica la instalación de Python y Flask, inicializa la base de datos y abre la aplicación en `http://127.0.0.1:5000`.
 
-3. **Instalar las dependencias**:
+### Opción 2: Manual
+
+1. Instalar dependencias:
    ```bash
    pip install -r requirements.txt
    ```
-
-4. **Inicializar la Base de Datos**:
+2. Inicializar la base de datos:
    ```bash
    python init_db.py
    ```
-
----
-
-## 💻 Ejecución
-
-### ⚡ Inicio Rápido (Script PowerShell)
-
-Para usuarios no técnicos o ejecuciones rápidas en Windows:
-
-1. Haz clic derecho sobre el archivo **`iniciar_techdesk.ps1`** y selecciona **Ejecutar con PowerShell** (o ejecuta desde la consola `./iniciar_techdesk.ps1`).
-2. El script realizará automáticamente:
-   - Verificación de la instalación de Python.
-   - Comprobación e instalación desatendida de la librería `Flask`.
-   - Inicialización automática de la base de datos si no existe.
-   - Apertura del navegador en `http://127.0.0.1:5000` tras un tiempo de espera de 3 segundos para garantizar la carga del servidor.
-
-### 🛠️ Inicio Manual (Desarrolladores)
-
-1. Iniciar la aplicación Flask:
+3. Iniciar el servidor:
    ```bash
    python app.py
    ```
-2. Abre tu navegador web y accede a:
-   ```text
-   http://127.0.0.1:5000
-   ```
+4. Abrir en el navegador: `http://127.0.0.1:5000`
 
 ---
 
-## 🖥️ Ejemplos de Uso
+## Uso Rápido
 
-1. **Registrar Asignación**:
-   - Selecciona un equipo en estado `Disponible`.
-   - Haz clic en **Ver Ficha / Operaciones**.
-   - Completa el nombre del usuario o área y la ubicación de destino.
-
-2. **Registrar Devolución**:
-   - En la ficha de un equipo `Asignado`, selecciona si regresa en **Buen Estado** o **Con Falla/Avería**.
-   - Si regresa en buen estado, cambiará automáticamente a `Disponible` en el `Depósito Central`.
-
-3. **Exportar Reportes**:
-   - En el Dashboard principal, haz clic en el botón **Exportar a CSV** para descargar el inventario actualizado.
-
+1. **Asignación (Op. 01):** Desde un equipo `Disponible`, asigna usuario/área y ubicación.
+2. **Devolución (Op. 02):** Registra el reingreso en buen estado (vuelve a `Disponible` / `Depósito Central`) o con falla (pasa a `En Mantenimiento` / `Taller IT`).
+3. **Mantenimiento/Baja (Op. 03):** Gestiona garantías, reparaciones o bajas definitivas.
+4. **Exportación:** Descarga el reporte consolidado en CSV desde el Dashboard.
