@@ -4,7 +4,7 @@
 - **Autor:** Tobías Gabriel Fioroni
 - **Fecha:** 20 de Octubre de 2026
 
-## 1. Enfoque General y Alcance del Dominio (ITAM y HAM Operativo)
+## Enfoque General (ITAM y HAM Operativo)
 
 Para el desarrollo del presente MVP (Producto Mínimo Viable), se analizó la práctica formal de **ITAM (IT Asset Management)**, la cual gobierna los activos tecnológicos de una organización durante la totalidad de su ciclo de vida. 
 
@@ -12,7 +12,7 @@ Se definió delimitar el alcance hacia la especialización de **HAM (Hardware As
 
 * **Lo que cubre el MVP:** Control de inventario de bienes de uso, gestión de estados de stock, asignación a custodios, reingresos, envío a mantenimiento/garantía con asignación automática de responsables, control de garantías por fecha, alertas de stock crítico y historial de movimientos.
 
-## 2. Modelo del Ciclo de Vida del Activo y Estados Definidos
+## Ciclo de Vida del Activo y Estados Definidos
 
 El stock debe administrarse de forma activa, no únicamente lo que ya está instalado y en uso. Los estados posibles habituales de un activo son: disponible, en preparación, reservado, en reparación, pendiente de baja, retirado, en tránsito, prestado y en cuarentena. Cada uno de estos estados condiciona qué acciones son válidas sobre el activo en ese momento
 
@@ -23,7 +23,7 @@ En este caso, se decidió utilizar **5 estados operativos** que replican el cicl
 4. **`En Garantía`:** Remitido al proveedor o servicio técnico oficial bajo cobertura contractual. El sistema asigna automáticamente como custodio al **'Service Oficial'**.
 5. **`Dado de Baja`:** Estado terminal del activo por obsolescencia o daño irreparable. Conserva su historial de movimientos intacto para auditorías.
 
-## 3. Reglas de Negocio Operativas e Integridad de Procesos
+## Reglas de Negocio e Integridad de Procesos
 
 Para garantizar la coherencia del pañol y evitar inconsistencias de datos:
 
@@ -39,7 +39,22 @@ Para garantizar la coherencia del pañol y evitar inconsistencias de datos:
 4. **Historial de Movimientos:** Cada cambio de estado, asignación, devolución o reporte genera un registro inmutable con estado anterior, nuevo, custodio, ubicación, notas y marca de tiempo.
 5. **Identificación Única y QR:** Cada equipo cuenta con un etiqueta de activo (Asset Tag) unívoco (ej: `IT-2026-001`) y una etiqueta QR integrada para escaneo rápido y control de inventario.
 
-## 4. Modelo de Datos y Normalización (SQLite)
+## Stack/Tecnología utilizada
+
+La aplicación se diseñó bajo una arquitectura **monolítica ligera y autosostenible**, priorizando la velocidad de desarrollo (MVP en 24 horas), la portabilidad y la nula fricción para su ejecución en entornos locales.
+
+- **Python (Lenguaje Principal)**: 
+  * *Por qué se eligió*: Es un lenguaje versátil, de tipado dinámico limpio y con una altísima velocidad de prototipado. Permite implementar la lógica de negocio y las reglas HAM (Hardware Asset Management) de manera clara y legible.
+- **Flask (Backend Framework)**: 
+  * *Por qué se eligió*: A diferencia de frameworks más pesados como Django, Flask es un microframework minimalista que no impone una estructura rígida ni requiere ORMs complejos. Brinda un control directo sobre las rutas, las sesiones, los mensajes `flash` y las consultas SQL, siendo perfecto para un MVP rápido y eficiente.
+- **SQLite (Base de Datos)**: 
+  * *Por qué se eligió*: Al ser una base de datos basada en un archivo local (`inventory.db`), elimina por completo la necesidad de instalar, configurar y mantener servidores externos de bases de datos (como PostgreSQL o MySQL). Garantiza que el sistema sea completamente portátil y se levante con un solo clic.
+- **Tailwind CSS vía CDN (Frontend & UI)**: 
+  * *Por qué se eligió*: Permite diseñar interfaces modernas, limpias y responsivas directamente en el HTML mediante clases utilitarias, **sin necesidad de configurar complejos compiladores de Node.js (npm), Webpack o dependencias pesadas** en la máquina del evaluador.
+- **PowerShell (Automatización y Despliegue)**: 
+  * *Por qué se eligió*: Pensando en la experiencia de usuario para personal no técnico, se desarrolló un script de automatización (`iniciar_techdesk.ps1`) que verifica dependencias, instala Flask de forma desatendida si no está presente, inicializa la base de datos y abre el navegador de forma sincronizada.
+
+## Modelo de Datos y Normalización (SQLite)
 
 El sistema utiliza un esquema relacional normalizado en SQLite compuesto por tres tablas principales diseñadas para garantizar la integridad referencial y el seguimiento histórico de activos. En resumen:
 1. **`assets`**: Tabla central que almacena el inventario de equipos, estados, custodios, ubicaciones y la **fecha de vencimiento de garantía (`warranty_expiration`)**.
@@ -88,3 +103,4 @@ Almacena los umbrales de alerta configurables para cada categoría de hardware.
 
 ### Relaciones entre Entidades (Cardinalidad)
 - **`assets` (1) ─── (0..N) `asset_history`**: Un activo puede tener cero o múltiples registros históricos en la bitácora de auditoría. Cada registro histórico pertenece estrictamente a un único activo (`FOREIGN KEY (asset_id)`).
+
