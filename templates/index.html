@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Tarjetas de Métricas -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <p class="text-xs text-slate-500 font-medium">Total Activos</p>
+        <p class="text-2xl font-bold text-slate-800 mt-1">{{ metrics.total }}</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <p class="text-xs text-emerald-600 font-medium">Disponibles</p>
+        <p class="text-2xl font-bold text-emerald-700 mt-1">{{ metrics.disponibles }}</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <p class="text-xs text-blue-600 font-medium">Asignados</p>
+        <p class="text-2xl font-bold text-blue-700 mt-1">{{ metrics.asignados }}</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <p class="text-xs text-amber-600 font-medium">Mant. / Garantía</p>
+        <p class="text-2xl font-bold text-amber-700 mt-1">{{ metrics.mantenimiento }}</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <p class="text-xs text-rose-600 font-medium">Dados de Baja</p>
+        <p class="text-2xl font-bold text-rose-700 mt-1">{{ metrics.baja }}</p>
+    </div>
+</div>
+
+<!-- Filtros de Búsqueda -->
+<div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6">
+    <form method="GET" action="/" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Buscar por Tag / Modelo / Custodio</label>
+            <input type="text" name="search" value="{{ search }}" placeholder="Ej: TAG-1001 o MacBook..." class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Categoría</label>
+            <select name="category" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <option value="">Todas las Categorías</option>
+                {% for cat in categories %}
+                    <option value="{{ cat }}" {% if selected_cat == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Estado</label>
+            <select name="status" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <option value="">Todos los Estados</option>
+                {% for st in statuses %}
+                    <option value="{{ st }}" {% if selected_status == st %}selected{% endif %}>{{ st }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="flex items-end gap-2">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition">Filtrar</button>
+            <a href="/" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-2 px-4 rounded-lg text-sm transition text-center">Limpiar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Tabla de Inventario -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    <th class="py-3 px-4">Asset Tag</th>
+                    <th class="py-3 px-4">Equipo / Modelo</th>
+                    <th class="py-3 px-4">Categoría</th>
+                    <th class="py-3 px-4">Estado</th>
+                    <th class="py-3 px-4">Custodio</th>
+                    <th class="py-3 px-4">Ubicación</th>
+                    <th class="py-3 px-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+                {% for asset in assets %}
+                <tr class="hover:bg-slate-50">
+                    <td class="py-3 px-4 font-mono font-bold text-slate-700">{{ asset.asset_tag }}</td>
+                    <td class="py-3 px-4 font-medium text-slate-900">{{ asset.name }}</td>
+                    <td class="py-3 px-4 text-slate-600">{{ asset.category }}</td>
+                    <td class="py-3 px-4">
+                        {% if asset.status == 'Disponible' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">Disponible</span>
+                        {% elif asset.status == 'Asignado' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Asignado</span>
+                        {% elif asset.status == 'En Mantenimiento' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">En Mantenimiento</span>
+                        {% elif asset.status == 'En Garantía' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">En Garantía</span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-700">Dado de Baja</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3 px-4 text-slate-700">{{ asset.custodian }}</td>
+                    <td class="py-3 px-4 text-slate-500">{{ asset.location }}</td>
+                    <td class="py-3 px-4 text-center">
+                        <a href="/asset/{{ asset.id }}" class="inline-flex items-center text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 px-3 py-1.5 rounded border border-slate-300 font-medium transition">
+                            Gestionar
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="py-8 text-center text-slate-400">No se encontraron activos que coincidan con la búsqueda.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
