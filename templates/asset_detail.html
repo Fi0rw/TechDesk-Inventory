@@ -9,25 +9,25 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     
-    <!-- Columna Izquierda: Ficha Técnica + ETIQUETA CÓDIGO QR -->
+    <!-- Columna Izquierda: Ficha Técnica -->
     <div class="lg:col-span-1 space-y-6">
         <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <div class="flex justify-between items-start mb-4">
                 <div>
-                    <span class="font-mono text-xs text-slate-400 font-bold uppercase tracking-wider block">Asset Tag</span>
+                    <span class="font-mono text-xs text-slate-400 font-bold uppercase block">Asset Tag</span>
                     <h1 class="text-2xl font-black text-slate-800">{{ asset.asset_tag }}</h1>
                 </div>
                 <div>
                     {% if asset.status == 'Disponible' %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">Disponible</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">Disponible</span>
                     {% elif asset.status == 'Asignado' %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800">Asignado</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800">Asignado</span>
                     {% elif asset.status == 'En Mantenimiento' %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">En Mantenimiento</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">En Mantenimiento</span>
                     {% elif asset.status == 'En Garantía' %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800">En Garantía</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800">En Garantía</span>
                     {% else %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700">Dado de Baja</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700">Dado de Baja</span>
                     {% endif %}
                 </div>
             </div>
@@ -43,15 +43,19 @@
                 </div>
                 <div>
                     <span class="text-xs text-slate-500 block font-medium">Custodio Actual</span>
-                    <span class="font-medium text-slate-800">{{ asset.custodian }}</span>
+                    <span class="font-bold text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 inline-block mt-0.5">{{ asset.custodian }}</span>
                 </div>
                 <div>
                     <span class="text-xs text-slate-500 block font-medium">Ubicación Física</span>
                     <span class="text-slate-700">{{ asset.location }}</span>
                 </div>
+                <div>
+                    <span class="text-xs text-slate-500 block font-medium">Vencimiento Cobertura / Garantía</span>
+                    <span class="text-xs font-mono font-bold text-slate-700">{{ asset.warranty_expiration or 'Sin registro' }}</span>
+                </div>
             </div>
 
-            <!-- FUNCIONALIDAD 03: ETIQUETA QR IMPRIMIBLE -->
+            <!-- Etiqueta QR -->
             <div class="mt-6 pt-4 border-t border-slate-200 text-center">
                 <p class="text-xs font-bold text-slate-600 mb-2">Etiqueta de Inventario (QR)</p>
                 <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 inline-block">
@@ -62,33 +66,32 @@
                     🖨️ Imprimir Etiqueta
                 </button>
             </div>
-
         </div>
     </div>
 
     <!-- Columna Derecha: Operaciones HAM & Historial -->
     <div class="lg:col-span-2 space-y-6">
 
-        <!-- Panel de Operaciones -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <h2 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Operaciones Disponibles</h2>
 
+            <!-- Operación 01: Asignación -->
             {% if asset.status == 'Disponible' %}
             <form action="/op/assign/{{ asset.id }}" method="POST" class="space-y-3 bg-blue-50/50 p-4 rounded-lg border border-blue-100 mb-4">
                 <h3 class="text-sm font-bold text-blue-900">Operación 01: Entrega a Custodio / Empleado</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-slate-700">Nombre del Custodio / Usuario</label>
-                        <input type="text" name="custodian" required placeholder="Ej: Juan Pérez" class="w-full mt-1 p-2 border rounded text-sm">
+                        <label class="block text-xs font-medium text-slate-700">Nombre del Custodio / Usuario *</label>
+                        <input type="text" name="custodian" required placeholder="Ej: Juan Pérez" class="w-full mt-1 p-2 border rounded text-sm bg-white">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-700">Ubicación de Destino</label>
-                        <input type="text" name="location" required placeholder="Ej: Sucursal X / Home Office" class="w-full mt-1 p-2 border rounded text-sm">
+                        <label class="block text-xs font-medium text-slate-700">Ubicación de Destino *</label>
+                        <input type="text" name="location" required placeholder="Ej: Home Office / Sucursal Norte" class="w-full mt-1 p-2 border rounded text-sm bg-white">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-700">Notas de entrega</label>
-                    <input type="text" name="notes" placeholder="Ej: Se entrega con cargador y bolso" class="w-full mt-1 p-2 border rounded text-sm">
+                    <input type="text" name="notes" placeholder="Ej: Entregado con bolso y cargador" class="w-full mt-1 p-2 border rounded text-sm bg-white">
                 </div>
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded text-xs transition">
                     Procesar Entrega
@@ -96,25 +99,27 @@
             </form>
             {% endif %}
 
+            <!-- Operación 02: Devolución con valor por defecto 'Taller de IT' para fallas -->
             {% if asset.status == 'Asignado' %}
             <form action="/op/return/{{ asset.id }}" method="POST" class="space-y-3 bg-amber-50/50 p-4 rounded-lg border border-amber-100 mb-4">
-                <h3 class="text-sm font-bold text-amber-900">Operación 02: Devolución o Reingreso</h3>
+                <h3 class="text-sm font-bold text-amber-900">Operación 02: Devolución / Reingreso</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-700">Estado de Recepción</label>
-                        <select name="condition" class="w-full mt-1 p-2 border rounded text-sm">
-                            <option value="good">Buen Estado &rarr; Pasa a "Disponible"</option>
-                            <option value="faulty">Con Falla/Avería &rarr; Pasa a "En Mantenimiento"</option>
+                        <select name="condition" class="w-full mt-1 p-2 border rounded text-sm bg-white">
+                            <option value="good">Buen Estado &rarr; Pasa a "Disponible" (Custodio: N/A)</option>
+                            <option value="faulty">Con Falla/Avería &rarr; Pasa a "En Mantenimiento" (Taller de IT)</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-700">Ubicación de Recepción</label>
-                        <input type="text" name="location" value="Depósito Central" class="w-full mt-1 p-2 border rounded text-sm">
+                        <!-- Valor por defecto ajustado a Taller de IT (si es buen estado, el backend lo lleva a Depósito Central automáticamente) -->
+                        <input type="text" name="location" value="Taller de IT" class="w-full mt-1 p-2 border rounded text-sm bg-white" placeholder="Ej: Taller de IT / Depósito Central">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-700">Detalle / Comentarios de devolución</label>
-                    <input type="text" name="notes" placeholder="Ej: Devuelto por fin de contrato / Pantalla parpadea" class="w-full mt-1 p-2 border rounded text-sm">
+                    <label class="block text-xs font-medium text-slate-700">Observaciones</label>
+                    <input type="text" name="notes" placeholder="Ej: Retorno por fin de contrato / Falla de pantalla" class="w-full mt-1 p-2 border rounded text-sm bg-white">
                 </div>
                 <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2 rounded text-xs transition">
                     Procesar Devolución
@@ -122,33 +127,35 @@
             </form>
             {% endif %}
 
+            <!-- Operación 03: Mantenimiento, Garantía o Baja -->
             {% if asset.status != 'Asignado' and asset.status != 'Dado de Baja' %}
             <form action="/op/status_change/{{ asset.id }}" method="POST" class="space-y-3 bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <h3 class="text-sm font-bold text-slate-800">Operación 03: Mantenimiento, Garantía o Baja Definitiva</h3>
+                <p class="text-[11px] text-slate-500">Nota: La ubicación y el custodio se asignarán automáticamente según la regla seleccionada.</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-700">Nuevo Estado Destino</label>
-                        <select name="target_status" class="w-full mt-1 p-2 border rounded text-sm">
+                        <select name="target_status" class="w-full mt-1 p-2 border rounded text-sm bg-white">
                             {% if asset.status != 'Disponible' %}
-                                <option value="Disponible">Disponible (Reparado/Liberado)</option>
+                                <option value="Disponible">Disponible (Custodio: N/A)</option>
                             {% endif %}
                             {% if asset.status != 'En Mantenimiento' %}
-                                <option value="En Mantenimiento">En Mantenimiento</option>
+                                <option value="En Mantenimiento">En Mantenimiento (Custodio: Soporte Técnico | Ubicación: Taller de IT)</option>
                             {% endif %}
                             {% if asset.status != 'En Garantía' %}
-                                <option value="En Garantía">En Garantía (Service Oficial)</option>
+                                <option value="En Garantía">En Garantía (Custodio: Service Oficial)</option>
                             {% endif %}
-                            <option value="Dado de Baja">Dado de Baja Definitiva</option>
+                            <option value="Dado de Baja">Dado de Baja (Custodio: N/A)</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-700">Nueva Ubicación (Opcional)</label>
-                        <input type="text" name="location" placeholder="Ej: Taller Externo / Depósito Scrapped" class="w-full mt-1 p-2 border rounded text-sm">
+                        <input type="text" name="location" placeholder="Dejar en blanco para usar la ubicación automática" class="w-full mt-1 p-2 border rounded text-sm bg-white">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-700">Justificación / Motivo</label>
-                    <input type="text" name="notes" required placeholder="Ej: Falla no reparable / Fin de vida útil / Enviado a RMA" class="w-full mt-1 p-2 border rounded text-sm">
+                    <label class="block text-xs font-medium text-slate-700">Justificación / Motivo *</label>
+                    <input type="text" name="notes" required placeholder="Ej: Falla no reparable / Enviado a RMA" class="w-full mt-1 p-2 border rounded text-sm bg-white">
                 </div>
                 <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white font-medium px-4 py-2 rounded text-xs transition">
                     Aplicar Cambio de Estado
@@ -176,8 +183,8 @@
                             <span class="text-slate-400 font-mono">{{ log.timestamp }}</span>
                         </div>
                         <p class="text-slate-600 mt-1">{{ log.notes }}</p>
-                        <div class="mt-1 text-[11px] text-slate-400">
-                            Estado anterior: <span class="font-semibold">{{ log.previous_status }}</span> &rarr; Nuevo estado: <span class="font-semibold text-slate-700">{{ log.new_status }}</span>
+                        <div class="mt-1 text-[11px] text-slate-500 font-medium">
+                            Estado: <span class="text-slate-700">{{ log.previous_status }}</span> &rarr; <span class="text-slate-900 font-bold">{{ log.new_status }}</span> | Ubicación: <span class="text-slate-800 font-bold">{{ log.location }}</span> | Custodio: <span class="text-blue-700 font-bold">{{ log.custodian }}</span>
                         </div>
                     </div>
                 </div>

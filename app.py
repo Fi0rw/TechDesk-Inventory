@@ -11,6 +11,20 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+# REGLA HAM: Función central para determinar el custodio automáticamente
+def resolve_custodian(target_status, input_custodian=None):
+    if target_status == 'Disponible':
+        return 'N/A'
+    elif target_status == 'Asignado':
+        return input_custodian if input_custodian else 'N/A'
+    elif target_status == 'En Mantenimiento':
+        return 'Soporte Técnico Especializado'
+    elif target_status == 'En Garantía':
+        return 'Service Oficial'
+    elif target_status == 'Dado de Baja':
+        return 'N/A'
+    return 'N/A'
+
 ALLOWED_TRANSITIONS = {
     'Disponible': ['Asignado', 'En Mantenimiento', 'En Garantía', 'Dado de Baja'],
     'Asignado': ['Disponible'],
@@ -43,7 +57,6 @@ def index():
     query += ' ORDER BY id DESC'
     assets = conn.execute(query, params).fetchall()
     
-    # Métrica general
     metrics = {
         'total': conn.execute('SELECT COUNT(*) FROM assets').fetchone()[0],
         'disponibles': conn.execute("SELECT COUNT(*) FROM assets WHERE status = 'Disponible'").fetchone()[0],
@@ -52,7 +65,6 @@ def index():
         'baja': conn.execute("SELECT COUNT(*) FROM assets WHERE status = 'Dado de Baja'").fetchone()[0],
     }
 
-    # REGLA 01: Verificación de Mínimos por Categoría
     category_alerts = []
     settings = conn.execute('SELECT * FROM category_settings').fetchall()
     for st in settings:
@@ -78,7 +90,6 @@ def index():
                            category_alerts=category_alerts)
 
 
-# FUNCIONALIDAD 01: Configuración de Mínimos
 @app.route('/settings/min_stock', methods=['POST'])
 def update_min_stock():
     category = request.form.get('category')
@@ -96,21 +107,18 @@ def update_min_stock():
     return redirect(url_for('index'))
 
 
-# FUNCIONALIDAD 02: Exportar Reporte a CSV / Excel
 @app.route('/export/csv')
 def export_csv():
     conn = get_db_connection()
-    assets = conn.execute('SELECT id, asset_tag, name, category, status, location, custodian, updated_at FROM assets').fetchall()
+    assets = conn.execute('SELECT id, asset_tag, name, category, status, location, custodian, warranty_expiration, updated_at FROM assets').fetchall()
     conn.close()
 
     output = io.StringIO()
     writer = csv.writer(output)
-    
-    # Encabezados en español
-    writer.writerow(['ID', 'Asset Tag', 'Nombre/Modelo', 'Categoria', 'Estado', 'Ubicacion', 'Custodio', 'Ultima Actualizacion'])
+    writer.writerow(['ID', 'Asset Tag', 'Nombre/Modelo', 'Categoria', 'Estado', 'Ubicacion', 'Custodio', 'Vencimiento Garantia', 'Ultima Actualizacion'])
     
     for a in assets:
-        writer.writerow([a['id'], a['asset_tag'], a['name'], a['category'], a['status'], a['location'], a['custodian'], a['updated_at']])
+        writer.writerow([a['id'], a['asset_tag'], a['name'], a['category'], a['status'], a['location'], a['custodian'], a['warranty_expiration'], a['updated_at']])
 
     output.seek(0)
     return Response(
@@ -130,8 +138,6 @@ def asset_detail(asset_id):
         conn.close()
         return redirect(url_for('index'))
 
-    # FUNCIONALIDAD 03: Generación del Código QR para Escaneo/Impresión
-    # Codificamos la URL directa del activo
     qr_data = request.host_url.rstrip('/') + url_for('asset_detail', asset_id=asset_id)
     qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={qr_data}"
 
@@ -140,7 +146,6 @@ def asset_detail(asset_id):
     return render_template('asset_detail.html', asset=asset, history=history, qr_code_url=qr_code_url)
 
 
-# OPERACIONES HAM
 @app.route('/op/assign/<int:asset_id>', methods=['POST'])
 def assign_asset(asset_id):
     custodian = request.form.get('custodian', '').strip()
@@ -148,7 +153,7 @@ def assign_asset(asset_id):
     notes = request.form.get('notes', '').strip()
 
     if not custodian or not location:
-        flash('Debe especificar el custodio y la ubicación física.', 'error')
+        flash('Debe especificar de forma obligatoria el Custodio/Usuario y la Ubicación.', 'error')
         return redirect(url_for('asset_detail', asset_id=asset_id))
 
     conn = get_db_connection()
@@ -164,9 +169,9 @@ def assign_asset(asset_id):
     ''', (custodian, location, asset_id))
 
     conn.execute('''
-        INSERT INTO asset_history (asset_id, action, previous_status, new_status, notes)
-        VALUES (?, 'Asignación de Activo', 'Disponible', 'Asignado', ?)
-    ''', (asset_id, f"Asignado a: {custodian} | Ubicación: {location} | Notas: {notes}"))
+        INSERT INTO asset_history (asset_id, action, previous_status, new_status, custodian, location, notes)
+        VALUES (?, 'Asignación de Activo', 'Disponible', 'Asignado', ?, ?, ?)
+    ''', (asset_id, custodian, location, notes))
 
     conn.commit()
     conn.close()
@@ -174,38 +179,51 @@ def assign_asset(asset_id):
     return redirect(url_for('asset_detail', asset_id=asset_id))
 
 
+# OPERACIÓN 02: Devolución / Reingreso al Depósito
 @app.route('/op/return/<int:asset_id>', methods=['POST'])
 def return_asset(asset_id):
     condition = request.form.get('condition')
-    location = request.form.get('location', 'Depósito Central').strip()
+    location = request.form.get('location', '').strip()
     notes = request.form.get('notes', '').strip()
 
     conn = get_db_connection()
     asset = conn.execute('SELECT * FROM assets WHERE id = ?', (asset_id,)).fetchone()
 
     if asset['status'] != 'Asignado':
-        flash('Solo se pueden registrar devoluciones de equipos en estado "Asignado".', 'error')
+        flash('Regla HAM: Solo se pueden devolver equipos que estén actualmente en estado "Asignado".', 'error')
         conn.close()
         return redirect(url_for('asset_detail', asset_id=asset_id))
 
-    new_status = 'Disponible' if condition == 'good' else 'En Mantenimiento'
-    action_name = 'Devolución (Buen Estado)' if condition == 'good' else 'Devolución (Con Falla/Avería)'
+    # LÓGICA CORREGIDA Y AUTOMÁTICA DE UBICACIÓN Y CUSTODIO
+    if condition == 'good':
+        new_status = 'Disponible'
+        new_custodian = resolve_custodian(new_status)
+        # Si pasa a disponible, por regla obligatoria va al Depósito Central
+        final_location = 'Depósito Central'
+        action_name = 'Devolución (Buen Estado)'
+    else:
+        new_status = 'En Mantenimiento'
+        new_custodian = resolve_custodian(new_status)
+        # Si va a mantenimiento con falla, por defecto va al Taller de IT (a menos que especifiquen otra cosa)
+        final_location = location if location and location != 'Depósito Central' else 'Taller de IT'
+        action_name = 'Devolución (Con Falla/Avería)'
 
     conn.execute('''
-        UPDATE assets SET status = ?, custodian = 'N/A', location = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-    ''', (new_status, location, asset_id))
+        UPDATE assets SET status = ?, custodian = ?, location = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+    ''', (new_status, new_custodian, final_location, asset_id))
 
     conn.execute('''
-        INSERT INTO asset_history (asset_id, action, previous_status, new_status, notes)
-        VALUES (?, ?, 'Asignado', ?, ?)
-    ''', (asset_id, action_name, new_status, f"Ubicación de retorno: {location}. Notas: {notes}"))
+        INSERT INTO asset_history (asset_id, action, previous_status, new_status, custodian, location, notes)
+        VALUES (?, ?, 'Asignado', ?, ?, ?, ?)
+    ''', (asset_id, action_name, new_status, new_custodian, final_location, notes))
 
     conn.commit()
     conn.close()
-    flash(f'Devolución procesada correctamente. Nuevo estado: {new_status}.', 'success')
+    flash(f'Devolución registrada. Estado actual: {new_status} | Ubicación: {final_location} | Custodio: {new_custodian}.', 'success')
     return redirect(url_for('asset_detail', asset_id=asset_id))
 
 
+# OPERACIÓN 03: Mantenimiento, Garantía o Baja Definitiva corregida
 @app.route('/op/status_change/<int:asset_id>', methods=['POST'])
 def status_change(asset_id):
     target_status = request.form.get('target_status')
@@ -217,25 +235,34 @@ def status_change(asset_id):
     current_status = asset['status']
 
     if target_status not in ALLOWED_TRANSITIONS.get(current_status, []):
-        flash(f'Violación de Regla HAM: No se permite cambiar directo de "{current_status}" a "{target_status}". Realice una devolución primero.', 'error')
+        flash(f'Violación de Regla HAM: No se permite cambiar directamente de "{current_status}" a "{target_status}". Registre una devolución al depósito primero.', 'error')
         conn.close()
         return redirect(url_for('asset_detail', asset_id=asset_id))
 
-    new_location = location if location else asset['location']
-    new_custodian = 'N/A' if target_status in ['Disponible', 'Dado de Baja', 'En Mantenimiento', 'En Garantía'] else asset['custodian']
+    new_custodian = resolve_custodian(target_status)
+
+    # Ubicación inteligente por defecto según el estado de destino
+    if target_status == 'En Mantenimiento':
+        new_location = location if location else 'Taller de IT'
+    elif target_status == 'En Garantía':
+        new_location = location if location else 'Proveedor Externo'
+    elif target_status == 'Disponible':
+        new_location = location if location else 'Depósito Central'
+    else:
+        new_location = location if location else asset['location']
 
     conn.execute('''
         UPDATE assets SET status = ?, location = ?, custodian = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
     ''', (target_status, new_location, new_custodian, asset_id))
 
     conn.execute('''
-        INSERT INTO asset_history (asset_id, action, previous_status, new_status, notes)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (asset_id, f'Cambio de Estado a {target_status}', current_status, target_status, notes))
+        INSERT INTO asset_history (asset_id, action, previous_status, new_status, custodian, location, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (asset_id, f'Cambio de Estado a {target_status}', current_status, target_status, new_custodian, new_location, notes))
 
     conn.commit()
     conn.close()
-    flash(f'Estado del activo actualizado a "{target_status}".', 'success')
+    flash(f'Estado cambiado a "{target_status}". Ubicación asignada: "{new_location}" | Custodio: "{new_custodian}".', 'success')
     return redirect(url_for('asset_detail', asset_id=asset_id))
 
 
